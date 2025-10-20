@@ -12,13 +12,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // Método auxiliar para construir a resposta de erro
 
@@ -57,6 +60,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                     return field + ": " + defaultMessage;
                 }).collect(Collectors.joining(", "));
 
+        // Logar o erro de validação
+        logger.warn("Erro de validação em {}: {}", request.getRequestURI(), errors);
+
         // Construir a resposta de erro
         ErrorResponseDTO response = buildErrorResponse(HttpStatus.BAD_REQUEST, errors, request);
 
@@ -67,6 +73,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     // Tratamento genérico para outras exceções
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGenericException(Exception ex, HttpServletRequest request) {
+        logger.error("Erro interno no servidor - Path: {} - Mensagem: {}", request.getRequestURI(), ex.getMessage(), ex);
         ErrorResponseDTO response = buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
@@ -74,6 +81,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     // Tratamento para ExpenseNotFoundException
     @ExceptionHandler(ExpenseNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleExpenseNotFound(ExpenseNotFoundException ex, HttpServletRequest request) {
+        logger.warn("Recurso não encontrado: {} - Path: {}", ex.getMessage(), request.getRequestURI());
         ErrorResponseDTO response = buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
