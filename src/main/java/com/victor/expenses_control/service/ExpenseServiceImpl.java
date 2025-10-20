@@ -1,6 +1,7 @@
 package com.victor.expenses_control.service;
 
 import com.victor.expenses_control.dto.ExpenseDTO;
+import com.victor.expenses_control.exception.ExpenseNotFoundException;
 import com.victor.expenses_control.mapper.ExpenseMapper;
 import com.victor.expenses_control.model.Expense;
 import com.victor.expenses_control.repository.ExpenseRepository;
@@ -26,7 +27,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     public ExpenseDTO findById(Long id) {
         Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Despesa não encontrada com ID: " + id));
+                .orElseThrow(() -> new ExpenseNotFoundException(id));
         return expenseMapper.toDTO(expense);
     }
 
@@ -40,7 +41,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     public ExpenseDTO update(Long id, ExpenseDTO dto) {
         Expense existingExpense = expenseRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Despesa não encontrada com ID: " + id));
+                .orElseThrow(() -> new ExpenseNotFoundException(id));
 
         existingExpense.setDescription(dto.getDescription());
         existingExpense.setAmount(dto.getAmount());
@@ -55,7 +56,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     public void delete(Long id) {
         if (!expenseRepository.existsById(id)) {
-            throw new EntityNotFoundException("Despesa não encontrada com ID: " + id);
+            throw new ExpenseNotFoundException(id);
         }
         expenseRepository.deleteById(id);
     }
